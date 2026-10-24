@@ -1,0 +1,115 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum ItemType {
+  REEL
+  RESOURCE
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum Channel {
+  TELEGRAM
+  INSTAGRAM_BOT
+  INSTAGRAM_PERSONAL
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model Item {
+  id           String           @id @default(cuid())
+  type         ItemType
+  sourceUrl    String
+  thumbnailUrl String?
+
+  title               String?
+  author              String?
+  keyPoints           String[]
+  problemSolved       String?
+  toolsMentioned      String[]
+  prerequisites       String[]
+  transcript          String?
+  transcriptFormatted String?
+  hasVideo            Boolean          @default(false)
+
+  status            ProcessingStatus @default(PENDING)
+  channel           Channel          @default(TELEGRAM)
+  chatId            BigInt?
+  telegramMessageId Int?
+  igsid             String?
+  igMessageId       String?
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  tags       Tag[]     @relation("ItemToTag")
+  setupSteps SetupStep[]
+
+  relatedToId String?
+  relatedTo   Item?  @relation("ResourceForReel", fields: [relatedToId], references: [id], onDelete: SetNull)
+  resources   Item[] @relation("ResourceForReel")
+
+  embedding Unsupported("vector(768)")?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  description String?
+  items       Item[]
+
+  @@index([parentId])
+}
+
+model SetupStep {
+  id     String @id @default(cuid())
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  order  Int
+  text   String
+  link   String?
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  items Item[] @relation("ItemToTag")
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model PendingCapture {
+  id             String   @id @default(cuid())
+  senderIgsid    String
+  senderUsername String?
+  url            String
+  rawText        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([senderIgsid])
+}

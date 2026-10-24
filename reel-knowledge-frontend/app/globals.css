@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #ECEBE2;
+  --card: #FFFFFF;
+  --ink: #1F2421;
+  --teal: #2F6F63;
+  --rust: #A8532E;
+  --line: #C9C7B8;
+  --muted: #6B6A5F;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-teal: var(--teal);
+  --color-rust: var(--rust);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+
+  --font-display: var(--font-space-grotesk);
+  --font-body: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Visible keyboard focus everywhere — required, do not remove */
+:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

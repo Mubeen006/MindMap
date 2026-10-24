@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Item" ADD COLUMN "hasVideo" BOOLEAN NOT NULL DEFAULT false;
