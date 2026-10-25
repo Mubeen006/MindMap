@@ -31,8 +31,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+        suppressHydrationWarning
+      >
         <Header />
         <main className="max-w-6xl mx-auto px-6 py-8">{children}</main>
       </body>

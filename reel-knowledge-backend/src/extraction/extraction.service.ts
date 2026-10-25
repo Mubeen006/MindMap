@@ -85,8 +85,21 @@ export class ExtractionService implements OnModuleInit {
     }
   }
 
+  private getCookieArgs(): string {
+    const browserCookies = this.config.get<string>('YT_DLP_COOKIES_FROM_BROWSER');
+    if (browserCookies) {
+      return `--cookies-from-browser ${browserCookies}`;
+    }
+    const cookieFile = this.config.get<string>('YT_DLP_COOKIES_PATH') || path.join(process.cwd(), 'cookies.txt');
+    if (fs.existsSync(cookieFile)) {
+      return `--cookies ${this.q(cookieFile)}`;
+    }
+    return '';
+  }
+
   private async runYtDlp(url: string, tmpDir: string, videoPath: string): Promise<void> {
-    const cmd = `${this.q(this.ytDlpPath)} --write-info-json --no-playlist -o ${this.q(videoPath)} ${this.q(url)}`;
+    const cookieArgs = this.getCookieArgs();
+    const cmd = `${this.q(this.ytDlpPath)} ${cookieArgs} --write-info-json --no-playlist -o ${this.q(videoPath)} ${this.q(url)}`.trim();
 
     try {
       await execAsync(cmd, { timeout: 120000, env: process.env, cwd: tmpDir });
@@ -94,7 +107,14 @@ export class ExtractionService implements OnModuleInit {
       this.logger.warn(`yt-dlp failed, attempting self-update then retry: ${error.message}`);
 
       try {
-        await execAsync(`${this.q(this.ytDlpPath)} -U`, { timeout: 60000, env: process.env });
+        await execAsync(`${this.q(this.ytDlpPath)} -U`, { timeout: 60000, env: process.env }).catch(async () => {
+          await execAsync('python -m pip install -U yt-dlp', { timeout: 60000, env: process.env }).catch(() => {});
+        });
+      } catch {
+        // Ignore update failure and continue to retry
+      }
+
+      try {
         await execAsync(cmd, { timeout: 120000, env: process.env, cwd: tmpDir });
       } catch (retryError) {
         throw new Error(`yt-dlp failed after retry: ${retryError.message}`);
