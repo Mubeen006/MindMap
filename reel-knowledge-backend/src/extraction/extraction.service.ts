@@ -78,6 +78,17 @@ export class ExtractionService implements OnModuleInit {
       fs.mkdirSync(this.STORAGE_DIR, { recursive: true });
       const destPath = path.join(this.STORAGE_DIR, `${itemId}.mp4`);
       fs.copyFileSync(videoPath, destPath);
+
+      // Extract and persist permanent thumbnail locally
+      try {
+        const thumbDir = path.join(process.cwd(), 'storage', 'thumbnails');
+        fs.mkdirSync(thumbDir, { recursive: true });
+        const thumbPath = path.join(thumbDir, `${itemId}.jpg`);
+        execAsync(`${this.q(this.ffmpegPath)} -y -i ${this.q(videoPath)} -ss 00:00:01 -vframes 1 ${this.q(thumbPath)}`, { timeout: 15000, env: process.env }).catch(() => {});
+      } catch (err) {
+        this.logger.warn(`Could not extract local thumbnail for ${itemId}: ${err.message}`);
+      }
+
       return true;
     } catch (e) {
       this.logger.warn(`Could not persist video for ${itemId}: ${e.message}`);

@@ -107,7 +107,7 @@ export class MediaProcessor extends WorkerHost {
           prerequisites: card.prerequisites,
           transcript,
           transcriptFormatted: card.transcript_formatted || transcript,
-          thumbnailUrl: thumbnailUrl || null,
+          thumbnailUrl: hasVideo ? `/api/items/${itemId}/thumbnail` : (thumbnailUrl || null),
           hasVideo,
           categoryId: category.id,
           tags: { connect: tagConnects },

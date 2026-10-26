@@ -51,6 +51,11 @@ export class ItemsController {
     await this.itemsService.streamVideo(id, req, res);
   }
 
+  @Get(':id/thumbnail')
+  async getThumbnail(@Param('id') id: string, @Res() res: Response) {
+    await this.itemsService.streamThumbnail(id, res);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.itemsService.findOne(id);

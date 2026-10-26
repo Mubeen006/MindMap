@@ -36,12 +36,16 @@ export class InstagramCaptureService {
     const message = event.message;
 
     if (!message || !senderIgsid) {
-      this.logger.debug(`Skipping non-message event: ${JSON.stringify(event)}`);
       return;
     }
 
     const botAccountId = String(this.config.get<string>('IG_BOT_ACCOUNT_ID') ?? '').trim();
     const personalAccountId = String(this.config.get<string>('IG_PERSONAL_ACCOUNT_ID') ?? '').trim();
+
+    // Skip echo events of messages sent by the bot itself to prevent rejection feedback loops
+    if (senderIgsid === botAccountId || (message.is_echo && receivingAccountId === botAccountId)) {
+      return;
+    }
 
     this.logger.log(
       `📩 Event: sender=${senderIgsid} -> recipient=${recipientIgsid}, receivingAccount=${receivingAccountId} (botId=${botAccountId}, personalId=${personalAccountId})`,

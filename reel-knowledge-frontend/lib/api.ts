@@ -23,8 +23,16 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 function adaptItemSummary(raw: any): ItemSummary {
+  let thumb = raw.thumbnailUrl ?? null;
+  if (thumb && thumb.startsWith('/api')) {
+    thumb = `${API_URL}${thumb.replace(/^\/api/, '')}`;
+  } else if (raw.hasVideo && (!thumb || thumb.includes('cdninstagram.com') || thumb.includes('fbcdn.net'))) {
+    thumb = `${API_URL}/items/${raw.id}/thumbnail`;
+  }
+
   return {
     ...raw,
+    thumbnailUrl: thumb,
     author: raw.author ?? null,
     keyPoints: raw.keyPoints ?? [],
     problemSolved: raw.problemSolved ?? null,

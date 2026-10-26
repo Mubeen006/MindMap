@@ -274,6 +274,41 @@ export class ItemsService {
     fs.createReadStream(videoPath, { start, end }).pipe(res);
   }
 
+  async streamThumbnail(id: string, res: Response): Promise<void> {
+    const thumbPath = path.join(process.cwd(), 'storage', 'thumbnails', `${id}.jpg`);
+    if (fs.existsSync(thumbPath)) {
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      fs.createReadStream(thumbPath).pipe(res);
+      return;
+    }
+
+    const videoPath = path.join(process.cwd(), 'storage', 'videos', `${id}.mp4`);
+    if (fs.existsSync(videoPath)) {
+      try {
+        fs.mkdirSync(path.join(process.cwd(), 'storage', 'thumbnails'), { recursive: true });
+        const { execSync } = require('child_process');
+        execSync(`ffmpeg -y -i "${videoPath}" -ss 00:00:01 -vframes 1 "${thumbPath}"`, { timeout: 10000 });
+        if (fs.existsSync(thumbPath)) {
+          res.setHeader('Content-Type', 'image/jpeg');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          fs.createReadStream(thumbPath).pipe(res);
+          return;
+        }
+      } catch (e) {
+        // Fall back to item.thumbnailUrl
+      }
+    }
+
+    const item = await this.prisma.item.findUnique({ where: { id } });
+    if (item?.thumbnailUrl && item.thumbnailUrl.startsWith('http')) {
+      res.redirect(item.thumbnailUrl);
+      return;
+    }
+
+    res.status(404).send('Thumbnail not found');
+  }
+
   private validateUpdateDto(dto: any): UpdateItemDto {
     const out: UpdateItemDto = {};
 
